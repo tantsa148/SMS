@@ -1,0 +1,37 @@
+Projet SMS
+-Spring boot
+-Service : Twilio Messaging API
+-prix message sms a mada    :0,5267
+-prix message whatsapp mada :0,5337
+
+{
+  "expediteur": "+14155238885",
+  "destinataire": "+261383662512",
+  "messageTexte": {
+    "contenu": "Bonjour blablabla !"
+  }
+}
+-SMS: -expediteur
+      -recepteur
+      -cout 
+      -date envoie 
+      -MessageTexte
+      
+-MessageTexte:-Texte     
+
+$12.7699
+$12.2432
+$11.7095
+
+numero de test expediteur :
+                    -sms     :+12297570694
+                    -whatsapp:+14155238886
+                    
+http://localhost:8080/api/sms/envoyer
+http://localhost:8080/api/whatsapp/envoyer
+
+-Evennement
+    -clic 
+    -heure
+    -etc
+-    
