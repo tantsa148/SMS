@@ -1,0 +1,42 @@
+/* Conteneur principal du login */
+.login-page {
+  width: 400px;
+  margin: 50px auto; /* centré horizontalement et avec un espace depuis le haut */
+  text-align: left;
+  padding: 20px;
+  background-color: #fff; /* facultatif */
+  border-radius: 8px;      /* facultatif */
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* facultatif */
+}
+
+/* Titres et texte */
+.login-page h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Formulaire */
+.login-page form div {
+  margin-bottom: 15px;
+}
+
+.login-page form input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.login-page form button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  background-color: #0d6efd;
+  color: white;
+  cursor: pointer;
+}
+
+.login-page form button:hover {
+  background-color: #0b5ed7;
+}

@@ -4,6 +4,10 @@ import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
 
+import 'bootstrap/dist/css/bootstrap.min.css'
+// Bootstrap JS (nécessaire pour modals, dropdown, tooltip)
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import './assets/global.css' // <-- CSS global avec Google Fonts
 const app = createApp(App)
 
 app.use(router)

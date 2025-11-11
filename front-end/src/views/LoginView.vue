@@ -22,11 +22,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import '../assets/login.css'
 
-const username = ref<string>('')
-const password = ref<string>('')
-const error = ref<string>('')
-const loading = ref<boolean>(false)
+const username = ref('')
+const password = ref('')
+const error = ref('')
+const loading = ref(false)
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -39,23 +40,18 @@ const handleLogin = async (): Promise<void> => {
     await authStore.login({ username: username.value, password: password.value })
     router.push('/dashboard')
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Erreur lors de la connexion'
+    // ✅ Correction ici :
+    if (err.response && err.response.data) {
+      // Le backend renvoie une chaîne simple (ex: "Le mot de passe ne peut pas être vide")
+      error.value = typeof err.response.data === 'string'
+        ? err.response.data
+        : err.response.data.message || 'Erreur lors de la connexion'
+    } else {
+      error.value = 'Impossible de contacter le serveur'
+    }
   } finally {
     loading.value = false
   }
 }
 </script>
 
-<style scoped>
-.login-page {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-.error {
-  color: red;
-  margin-top: 10px;
-}
-</style>
