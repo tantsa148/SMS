@@ -1,25 +1,39 @@
 package Birger.SMS.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import Birger.SMS.model.SMS;
-import Birger.SMS.service.SmsService;
+import Birger.SMS.service.MessagingService;
 
 @RestController
 @RequestMapping("/api/sms")
 public class SmsController {
 
-    @Autowired
-    private SmsService smsService;
+    private final MessagingService messagingService;
 
-    @PostMapping("/envoyer")
-    public String envoyerSms(@RequestBody SMS sms) {
-        // Appel du service et récupération du message (succès ou erreur)
-        String resultMessage = smsService.envoyerSMS(sms);
-        return resultMessage;
+    public SmsController(MessagingService messagingService) {
+        this.messagingService = messagingService;
+    }
+
+    /**
+     * Envoie un SMS
+     */
+    @PostMapping("/send")
+    public ResponseEntity<Map<String, Object>> envoyerSms(@RequestBody SMS sms) {
+        try {
+            Map<String, Object> response = messagingService.envoyerSMS(sms);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "message", e.getMessage()
+            ));
+        }
     }
 }

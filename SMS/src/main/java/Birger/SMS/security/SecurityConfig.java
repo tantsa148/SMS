@@ -44,20 +44,29 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
+        http
+            // CORS activé en utilisant WebConfig
+            .cors(cors -> {})  // corps vide pour indiquer à Spring d'utiliser la config globale
+            // CSRF désactivé pour JWT
+            .csrf(csrf -> csrf.disable())
+            // Autorisations
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/users/register", "/login/**").permitAll()
                 .anyRequest().authenticated()
             )
+            // Gestion des erreurs
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(securityErrorHandler)  // Gère les 401
-                .accessDeniedHandler(securityErrorHandler)       // Gère les 403
+                .authenticationEntryPoint(securityErrorHandler)
+                .accessDeniedHandler(securityErrorHandler)
             )
+            // Sessions stateless
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             );
 
+        // Filtre JWT
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

@@ -2,7 +2,7 @@
   <div class="sidebar-custom">
     <!-- En-tête -->
     <div class="d-flex justify-center items-center mb-4" style="height: 80px;">
-      <h1>ERP Next</h1>
+      <h1>SMS</h1>
     </div>
 
     <!-- Section Statistique -->
@@ -14,12 +14,50 @@
           :class="{ active: route.path === '/dashboard' }"
         >
           <i class="fas fa-home"></i>
-          Dash
+          Dashboard
         </RouterLink>
       </li>
     </ul>
 
-
+    <!-- Section Message -->
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <RouterLink
+          to="/message"
+          class="nav-link"
+          :class="{ active: route.path === '/message' }"
+        >
+          <i class="fas fa-envelope"></i>
+        Envoyer message
+        </RouterLink>
+      </li>
+    </ul>
+    
+    <!-- Section Programmation message -->
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <RouterLink
+          to="/progammeEnvoie"
+          class="nav-link"
+          :class="{ active: route.path === '/message' }"
+        >
+          <i class="fa-solid fa-paper-plane"></i>
+        Programmer message
+        </RouterLink>
+      </li>
+    </ul>
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <RouterLink
+          to="/historique"
+          class="nav-link"
+          :class="{ active: route.path === '/historique' }"
+        >
+          <i class="fas fa-envelope"></i>
+        historique
+        </RouterLink>
+      </li>
+    </ul>
     <!-- Bouton Déconnexion -->
     <ul class="nav flex-column mt-auto">
       <li class="nav-item">
@@ -33,20 +71,13 @@
 
 <script setup lang="ts">
 import { useRouter, useRoute, RouterLink } from 'vue-router'
-import { defineProps } from 'vue'
-import '../assets/sidebar.css'
+import '../assets/css/sidebar.css'
 
 
-const props = defineProps<{
-  usersCount?: number
-  customerCount?: number
-}>()
 
 const router = useRouter()
 const route = useRoute()
 
-const usersCount = props.usersCount ?? 0
-const customerCount = props.customerCount ?? 0
 
 const handleLogout = () => {
   localStorage.removeItem('jwtToken')

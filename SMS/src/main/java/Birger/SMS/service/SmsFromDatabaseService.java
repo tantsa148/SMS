@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.Message.Status;
+import com.twilio.rest.api.v2010.account.MessageCreator;
+import com.twilio.type.PhoneNumber;
 
 import Birger.SMS.model.Message;
 import Birger.SMS.repository.MessageRepository;
@@ -31,88 +34,84 @@ public class SmsFromDatabaseService {
         this.messageRepository = messageRepository;
     }
 
-    // Envoyer SMS classique
-        public Map<String, Object> envoyerMessageDepuisBase(Long messageId, String destinataire, String expediteur) {
-                Map<String, Object> response = new HashMap<>();
-                try {
-                Twilio.init(accountSid, authToken);
+    // 📨 Envoi SMS
+    public Map<String, Object> envoyerMessageDepuisBase(Long messageId, String destinataire, String expediteur) {
+        return envoyerDepuisBase(messageId, destinataire, expediteur, false);
+    }
 
-                Message messageEnBase = messageRepository.findById(messageId)
-                        .orElseThrow(() -> new RuntimeException("Message introuvable avec id: " + messageId));
+    // 💬 Envoi WhatsApp
+    public Map<String, Object> envoyerWhatsappDepuisBase(Long messageId, String destinataire, String expediteur) {
+        return envoyerDepuisBase(messageId, destinataire, expediteur, true);
+    }
 
-                if (destinataire == null || destinataire.isBlank()) {
-                        throw new IllegalArgumentException("Le numéro du destinataire est manquant ou vide.");
-                }
-                if (expediteur == null || expediteur.isBlank()) {
-                        throw new IllegalArgumentException("Le numéro de l'expéditeur est manquant ou vide.");
-                }
+    /**
+     * Méthode commune pour SMS et WhatsApp
+     */
+    private Map<String, Object> envoyerDepuisBase(Long messageId, String destinataire, String expediteur, boolean isWhatsapp) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Twilio.init(accountSid, authToken);
 
-                com.twilio.rest.api.v2010.account.Message twilioMsg =
-                        com.twilio.rest.api.v2010.account.Message.creator(
-                                new com.twilio.type.PhoneNumber(destinataire),
-                                new com.twilio.type.PhoneNumber(expediteur),
-                                messageEnBase.getTexte()
-                        ).create();
+            Message messageEnBase = messageRepository.findById(messageId)
+                    .orElseThrow(() -> new RuntimeException("Message introuvable avec id: " + messageId));
 
+            if (destinataire == null || destinataire.isBlank()) {
+                throw new IllegalArgumentException("Le numéro du destinataire est manquant ou vide.");
+            }
+            if (expediteur == null || expediteur.isBlank()) {
+                throw new IllegalArgumentException("Le numéro de l'expéditeur est manquant ou vide.");
+            }
+
+            // Préfixer pour WhatsApp
+            String to = isWhatsapp ? "whatsapp:" + destinataire : destinataire;
+            String from = isWhatsapp ? "whatsapp:" + expediteur : expediteur;
+
+            MessageCreator creator = com.twilio.rest.api.v2010.account.Message.creator(
+                    new PhoneNumber(to),
+                    new PhoneNumber(from),
+                    messageEnBase.getTexte()
+            );
+
+            com.twilio.rest.api.v2010.account.Message twilioMsg = creator.create();
+
+            // 🔍 Vérification de l'état Twilio
+            // Après twilioMsg.create()
+                Status status = twilioMsg.getStatus();
+                Integer errorCode = twilioMsg.getErrorCode();
+                String errorMessage = twilioMsg.getErrorMessage();
+
+                // Considérer comme succès si pas d'erreur Twilio
+                boolean isSuccess = (errorCode == null); // ignore le statut DELIVERED ici
+
+                if (!isSuccess) {
+                response.put("status", "failed");
+                response.put("statusMessage", status.toString());
+                response.put("errorCode", errorCode);
+                response.put("errorMessage", errorMessage != null ? errorMessage : "Erreur Twilio");
+                } else {
                 response.put("status", "success");
-                response.put("messageId", messageId);
-                response.put("destinataire", destinataire);
-                response.put("expediteur", expediteur);
-                response.put("texte", messageEnBase.getTexte());
-                response.put("sid", twilioMsg.getSid());
-                response.put("dateCreated", twilioMsg.getDateCreated());
-                response.put("statusMessage", twilioMsg.getStatus().toString());
-
-                } catch (Exception e) {
-                logger.error("Erreur lors de l'envoi SMS depuis la base : ", e);  // 🔥 log dans la console
-                response = TwilioErrorHandler.handleException(e);
+                response.put("statusMessage", status.toString());
                 }
 
-                return response;
+
+            // 🔧 Ajouter infos générales
+            response.put("type", isWhatsapp ? "whatsapp" : "sms");
+            response.put("messageId", messageId);
+            response.put("destinataire", destinataire);
+            response.put("expediteur", expediteur);
+            response.put("texte", messageEnBase.getTexte());
+            response.put("sid", twilioMsg.getSid());
+            response.put("dateCreated", twilioMsg.getDateCreated());
+
+            // 🪵 Log complet pour debug
+            logger.info("Twilio message SID: {}, status: {}, errorCode: {}, errorMessage: {}",
+                    twilioMsg.getSid(), status, errorCode, errorMessage);
+
+        } catch (Exception e) {
+            logger.error("Erreur lors de l'envoi du message via Twilio : ",e);
+            response = TwilioErrorHandler.handleException(e);
         }
 
-
-    // Envoyer WhatsApp
-        public Map<String, Object> envoyerWhatsappDepuisBase(Long messageId, String destinataire, String expediteur) {
-                Map<String, Object> response = new HashMap<>();
-                try {
-                Twilio.init(accountSid, authToken);
-
-                Message messageEnBase = messageRepository.findById(messageId)
-                        .orElseThrow(() -> new RuntimeException("Message introuvable avec id: " + messageId));
-
-                if (destinataire == null || destinataire.isBlank()) {
-                        throw new IllegalArgumentException("Le numéro du destinataire est manquant ou vide.");
-                }
-                if (expediteur == null || expediteur.isBlank()) {
-                        throw new IllegalArgumentException("Le numéro de l'expéditeur est manquant ou vide.");
-                }
-
-                String whatsappDestinataire = "whatsapp:" + destinataire;
-                String whatsappExpediteur = "whatsapp:" + expediteur;
-
-                com.twilio.rest.api.v2010.account.Message twilioMsg =
-                        com.twilio.rest.api.v2010.account.Message.creator(
-                                new com.twilio.type.PhoneNumber(whatsappDestinataire),
-                                new com.twilio.type.PhoneNumber(whatsappExpediteur),
-                                messageEnBase.getTexte()
-                        ).create();
-
-                response.put("status", "success");
-                response.put("type", "whatsapp");
-                response.put("messageId", messageId);
-                response.put("destinataire", destinataire);
-                response.put("expediteur", expediteur);
-                response.put("texte", messageEnBase.getTexte());
-                response.put("sid", twilioMsg.getSid());
-                response.put("dateCreated", twilioMsg.getDateCreated());
-                response.put("statusMessage", twilioMsg.getStatus().toString());
-
-                } catch (Exception e) {
-                logger.error("Erreur lors de l'envoi WhatsApp depuis la base : ", e);  // 🔥 log dans la console
-                response = TwilioErrorHandler.handleException(e);
-                }
-
-                return response;
-        }
+        return response;
+    }
 }

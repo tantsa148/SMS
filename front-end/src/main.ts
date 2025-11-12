@@ -7,7 +7,9 @@ import { createPinia } from 'pinia'
 import 'bootstrap/dist/css/bootstrap.min.css'
 // Bootstrap JS (nécessaire pour modals, dropdown, tooltip)
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
-import './assets/global.css' // <-- CSS global avec Google Fonts
+import './assets/css/global.css' // <-- CSS global avec Google Fonts
+import '@fortawesome/fontawesome-free/css/all.css'
+
 const app = createApp(App)
 
 app.use(router)

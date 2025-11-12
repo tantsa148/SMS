@@ -1,25 +1,39 @@
 package Birger.SMS.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import Birger.SMS.model.SMS;
-import Birger.SMS.service.WhatsAppService;
+import Birger.SMS.service.MessagingService;
 
 @RestController
 @RequestMapping("/api/whatsapp")
 public class WhatsAppController {
 
-    @Autowired
-    private WhatsAppService whatsAppService;
+    private final MessagingService messagingService;
 
-    @PostMapping("/envoyer")
-    public String envoyerWhatsApp(@RequestBody SMS sms) {
-        // Appel du service WhatsApp et récupération du message (succès ou erreur)
-        String resultMessage = whatsAppService.envoyerWhatsApp(sms);
-        return resultMessage;
+    public WhatsAppController(MessagingService messagingService) {
+        this.messagingService = messagingService;
+    }
+
+    /**
+     * Envoie un message WhatsApp
+     */
+    @PostMapping("/send")
+    public ResponseEntity<Map<String, Object>> envoyerWhatsApp(@RequestBody SMS sms) {
+        try {
+            Map<String, Object> response = messagingService.envoyerWhatsApp(sms);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "message", e.getMessage()
+            ));
+        }
     }
 }
