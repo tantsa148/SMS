@@ -5,6 +5,10 @@
 
     <!-- Contenu principal -->
     <div v-if="!isLoginPage" class="main-content">
+      <!-- Navbar ajoutée ici -->
+      <NavBar />
+
+      <!-- Contenu des routes -->
       <router-view />
     </div>
 
@@ -17,6 +21,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
+import NavBar from './components/HeaderNavbar.vue' // <-- importer ton NavBar
 
 const route = useRoute()
 
@@ -25,7 +30,6 @@ const isLoginPage = computed(() => route.path === '/login')
 </script>
 
 <style>
-
 /* Sidebar fixe */
 .sidebar-fixed {
   position: fixed;
@@ -38,10 +42,12 @@ const isLoginPage = computed(() => route.path === '/login')
 
 /* Contenu principal pour les pages normales */
 .main-content {
-  margin-left: 150px; /* espace pour la sidebar */
+  margin-left: 150px; /* pour la sidebar */
+  padding-top: 60px;  /* espace pour le header fixé */
   padding: 20px;
   flex: 1;
-  width: calc(100% - 250px); /* pour être sûr qu'il ne déborde pas */
+  width: calc(100% - 250px);
   min-height: 100vh;
 }
+
 </style>
