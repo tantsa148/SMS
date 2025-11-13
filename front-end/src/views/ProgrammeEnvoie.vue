@@ -40,7 +40,7 @@
       <div class="form-group">
         <label for="message">Message</label>
         <select id="message" v-model="selectedMessageId" required>
-          <option value="">-- Sélectionnez un message --</option>
+          <option value=""> Sélectionnez un message </option>
           <option
             v-for="m in messages"
             :key="m.id"

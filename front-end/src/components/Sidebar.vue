@@ -33,19 +33,21 @@
       </li>
     </ul>
     
-    <!-- Section Programmation message -->
+
+    <!-- Section Message -->
     <ul class="nav flex-column">
       <li class="nav-item">
         <RouterLink
           to="/progammeEnvoie"
           class="nav-link"
-          :class="{ active: route.path === '/message' }"
+          :class="{ active: route.path === '/progammeEnvoie' }"
         >
-          <i class="fa-solid fa-paper-plane"></i>
-        Programmer message
+          <i class="fas fa-paper-plane"></i>
+        envoi programme
         </RouterLink>
       </li>
     </ul>
+
     <ul class="nav flex-column">
       <li class="nav-item">
         <RouterLink
@@ -53,7 +55,7 @@
           class="nav-link"
           :class="{ active: route.path === '/historique' }"
         >
-          <i class="fas fa-envelope"></i>
+          <i class="fa fa-history"></i>
         historique
         </RouterLink>
       </li>
