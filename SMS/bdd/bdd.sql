@@ -7,14 +7,82 @@ CREATE DATABASE sms;
 -- Pour se connecter à la base sms
 \c sms
 
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,        -- identifiant unique pour chaque utilisateur
-    username VARCHAR(50) NOT NULL UNIQUE, -- nom d'utilisateur unique
-    role VARCHAR(20) NOT NULL,    -- rôle de l'utilisateur (ex: ADMIN, USER)
-    password VARCHAR(255) NOT NULL, -- mot de passe (hashé)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     texte TEXT NOT NULL
+);
+-- Table Utilisateur (exemple existant)
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    role VARCHAR(20) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table Numero
+CREATE TABLE numero (
+    id_numero SERIAL PRIMARY KEY,
+    valeur_numero VARCHAR(20) NOT NULL UNIQUE,
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- Table Possede (relation N:N entre users et Numero)
+CREATE TABLE possede (
+    id_utilisateur INT NOT NULL,
+    id_numero INT NOT NULL,
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_utilisateur, id_numero),
+    FOREIGN KEY (id_utilisateur) REFERENCES users(id),
+    FOREIGN KEY (id_numero) REFERENCES Numero(id_numero)
+); 
+
+
+-- Table Plateforme
+CREATE TABLE plateforme (
+    id SERIAL PRIMARY KEY,
+    nom_plateforme VARCHAR(50) UNIQUE NOT NULL,
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- Table DisponibleSur (relation N:N entre Numero et Plateforme)
+CREATE TABLE disponibleSur (
+    id_numero INT NOT NULL,
+    id_plateforme INT NOT NULL,
+    PRIMARY KEY (id_numero, id_plateforme),
+    FOREIGN KEY (id_numero) REFERENCES Numero(id_numero),
+    FOREIGN KEY (id_plateforme) REFERENCES plateforme(id)
+);
+
+
+
+-----------------------
+-------scrip a modifier
+-----------------------
+CREATE TABLE Numero (
+    id_numero INT PRIMARY KEY,
+    valeur_numero VARCHAR(20)
+);
+
+CREATE TABLE Possede (
+    id_utilisateur INT,
+    id_numero INT,
+    PRIMARY KEY (id_utilisateur, id_numero),
+    FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur),
+    FOREIGN KEY (id_numero) REFERENCES Numero(id_numero)
+);
+
+CREATE TABLE Plateforme (
+    id_plateforme INT PRIMARY KEY,
+    nom_plateforme VARCHAR(50)
+);
+
+CREATE TABLE DisponibleSur (
+    id_numero INT,
+    id_plateforme INT,
+    PRIMARY KEY (id_numero, id_plateforme),
+    FOREIGN KEY (id_numero) REFERENCES Numero(id_numero),
+    FOREIGN KEY (id_plateforme) REFERENCES Plateforme(id_plateforme)
 );
