@@ -26,6 +26,8 @@ CREATE TABLE numero (
     valeur_numero VARCHAR(20) NOT NULL UNIQUE,
     date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE numero
+ADD CONSTRAINT valeur_numero_non_vide CHECK (valeur_numero <> '');
 
 
 -- Table Possede (relation N:N entre users et Numero)
@@ -48,7 +50,7 @@ CREATE TABLE plateforme (
 
 
 -- Table DisponibleSur (relation N:N entre Numero et Plateforme)
-CREATE TABLE disponibleSur (
+CREATE TABLE disponible_sur (
     id_numero INT NOT NULL,
     id_plateforme INT NOT NULL,
     PRIMARY KEY (id_numero, id_plateforme),

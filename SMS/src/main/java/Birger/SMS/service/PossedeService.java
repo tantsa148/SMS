@@ -1,68 +1,88 @@
 package Birger.SMS.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.springframework.dao.DataIntegrityViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import Birger.SMS.dto.PossedeDTO;
 import Birger.SMS.dto.PossedeResponseDTO;
-import Birger.SMS.model.*;
-import Birger.SMS.repository.*;
+import Birger.SMS.model.Numero;
+import Birger.SMS.model.Possede;
+import Birger.SMS.model.PossedeId;
+import Birger.SMS.model.User;
+import Birger.SMS.repository.NumeroRepository;
+import Birger.SMS.repository.PossedeRepository;
+import Birger.SMS.repository.UserRepository;
 
 @Service
 public class PossedeService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PossedeService.class);
 
     private final PossedeRepository possedeRepository;
     private final UserRepository userRepository;
     private final NumeroRepository numeroRepository;
 
-    public PossedeService(PossedeRepository possedeRepository, UserRepository userRepository, NumeroRepository numeroRepository) {
+    public PossedeService(PossedeRepository possedeRepository, 
+                          UserRepository userRepository, 
+                          NumeroRepository numeroRepository) {
         this.possedeRepository = possedeRepository;
         this.userRepository = userRepository;
         this.numeroRepository = numeroRepository;
     }
 
-    // 🔹 Récupérer toutes les relations
-    public List<Possede> getAllPossede() {
-        return possedeRepository.findAll();
+    // ---------------- GET ----------------
+    public List<PossedeResponseDTO> getPossedeByUserId(Long userId) {
+        logger.info("Récupération des association pour l'utilisateur id={}", userId);
+        return possedeRepository.findByUtilisateur_Id(userId).stream()
+                .map(p -> new PossedeResponseDTO(p.getUtilisateur(), p.getNumero()))
+                .peek(pdto -> logger.info("Association : utilisateur={} / numero={}", pdto.getUsername(), pdto.getValeurNumero()))
+                .collect(Collectors.toList());
     }
 
-    // 🔹 Créer une nouvelle relation
-    @Transactional
+    // ---------------- CREATE ----------------
     public PossedeResponseDTO createPossede(PossedeDTO dto) {
-        // Vérifie si l'utilisateur existe
+        logger.info("Création Associtation : utilisateurId={}, numeroId={}", dto.getIdUtilisateur(), dto.getIdNumero());
+
         User user = userRepository.findById(dto.getIdUtilisateur())
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable avec l'ID : " + dto.getIdUtilisateur()));
+                .orElseThrow(() -> {
+                    logger.error("Utilisateur introuvable id={}", dto.getIdUtilisateur());
+                    return new RuntimeException("Utilisateur introuvable");
+                });
 
-        // Vérifie si le numéro existe
         Numero numero = numeroRepository.findById(dto.getIdNumero())
-                .orElseThrow(() -> new RuntimeException("Numéro introuvable avec l'ID : " + dto.getIdNumero()));
+                .orElseThrow(() -> {
+                    logger.error("Numéro introuvable id={}", dto.getIdNumero());
+                    return new RuntimeException("Numéro introuvable");
+                });
 
-        // Vérifie si la relation existe déjà
-        PossedeId id = new PossedeId(dto.getIdUtilisateur(), dto.getIdNumero());
-        if (possedeRepository.existsById(id)) {
-            throw new DataIntegrityViolationException("Cette relation utilisateur-numéro existe déjà !");
+        PossedeId possedeId = new PossedeId(user.getId(), numero.getId());
+        if (possedeRepository.existsById(possedeId)) {
+            logger.warn("Cette association existe déjà : utilisateurId={} / numeroId={}", user.getId(), numero.getId());
+            throw new RuntimeException("Cette association existe déjà !");
         }
 
-        // Crée et sauvegarde la relation
         Possede possede = new Possede(user, numero);
-        possedeRepository.save(possede);
+        Possede saved = possedeRepository.save(possede);
+        logger.info("Association créée avec succès : utilisateur={} / numero={}", user.getUsername(), numero.getValeurNumero());
 
-        // Retourne un DTO pour la réponse JSON
-        return new PossedeResponseDTO(user, numero);
+        return new PossedeResponseDTO(saved.getUtilisateur(), saved.getNumero());
     }
 
-    // 🔹 Supprimer une relation
-    @Transactional
-    public void deletePossede(Long idUtilisateur, Long idNumero) {
-        PossedeId id = new PossedeId(idUtilisateur, idNumero);
+    // ---------------- DELETE ----------------
+    public void deletePossede(Long userId, Long numeroId) {
+        logger.info("Suppression d'une association : utilisateurId={}, numeroId={}", userId, numeroId);
 
-        Possede possede = possedeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Aucune relation trouvée pour l'utilisateur " 
-                        + idUtilisateur + " et le numéro " + idNumero));
+        PossedeId id = new PossedeId(userId, numeroId);
+        if (!possedeRepository.existsById(id)) {
+            logger.error("Association non trouvée pour suppression : utilisateurId={}, numeroId={}", userId, numeroId);
+            throw new RuntimeException("Association non trouvée pour suppression !");
+        }
 
-        possedeRepository.delete(possede);
+        possedeRepository.deleteById(id);
+        logger.info("Association supprimée avec succès : utilisateurId={}, numeroId={}", userId, numeroId);
     }
 }

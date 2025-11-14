@@ -33,15 +33,24 @@ public class NumeroService {
     }
 
     public Numero createNumero(Numero numero) {
-        logger.info("Création d’un nouveau numéro : {}", numero.getValeurNumero());
-        if (numeroRepository.existsByValeurNumero(numero.getValeurNumero())) {
-            logger.warn("Le numéro {} existe déjà !", numero.getValeurNumero());
-            throw new DataIntegrityViolationException("Le numéro existe déjà !");
-        }
-        Numero saved = numeroRepository.save(numero);
-        logger.info("Numéro créé avec succès : {}", saved.getId());
-        return saved;
+    logger.info("Création d’un nouveau numéro : {}", numero.getValeurNumero());
+
+    // Vérification valeur vide ou null
+    if (numero.getValeurNumero() == null || numero.getValeurNumero().trim().isEmpty()) {
+        logger.warn("Tentative de création d'un numéro vide");
+        throw new IllegalArgumentException("Le champ 'valeur_numero' ne peut pas être vide");
     }
+
+    if (numeroRepository.existsByValeurNumero(numero.getValeurNumero())) {
+        logger.warn("Le numéro {} existe déjà !", numero.getValeurNumero());
+        throw new DataIntegrityViolationException("Le numéro existe déjà !");
+    }
+
+    Numero saved = numeroRepository.save(numero);
+    logger.info("Numéro créé avec succès : {}", saved.getId());
+    return saved;
+}
+
 
     public Numero updateNumero(Long id, Numero updatedNumero) {
         logger.info("Mise à jour du numéro ID : {}", id);

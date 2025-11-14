@@ -1,10 +1,10 @@
 <template>
   <div id="app">
     <!-- Sidebar affichée seulement si on n'est pas sur login -->
-    <Sidebar v-if="!isLoginPage" class="sidebar-fixed" />
+    <Sidebar v-if="!isLoginPage && !insertnumber" class="sidebar-fixed" />
 
     <!-- Contenu principal -->
-    <div v-if="!isLoginPage" class="main-content">
+    <div v-if="!isLoginPage && !insertnumber" class="main-content">
       <!-- Navbar ajoutée ici -->
       <NavBar />
 
@@ -27,6 +27,7 @@ const route = useRoute()
 
 // Détecte si on est sur la page login
 const isLoginPage = computed(() => route.path === '/login')
+const insertnumber = computed(() => route.path === '/insertnumero')
 </script>
 
 <style>
