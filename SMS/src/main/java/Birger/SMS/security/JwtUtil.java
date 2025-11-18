@@ -10,9 +10,9 @@ import io.jsonwebtoken.security.Keys;
 
 public class JwtUtil {
 
-    private static final String SECRET = "MaCleSecreteSuperLonguePourJWT1234567890"; // change selon toi
-    private static final long EXPIRATION = 1000 * 60 * 60; // 1h
+   private static final String SECRET = "CeciEstUneCleSecreteUltraLonguePourJWTQuiDoitFaireAuMoins32Octets123456";
     private static final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    private static final long EXPIRATION = 1000 * 60 * 60; // 1h
 
     // Génère un token avec userId et username
     public static String generateToken(Long userId, String username) {

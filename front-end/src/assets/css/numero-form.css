@@ -1,0 +1,163 @@
+/* ============================================================== */
+/*  MODALES – STYLE MODERNE 2025 (fond léger + flou + contraste) */
+/*  Colle ça à la fin de numero-form.css → garanti sans surprise   */
+/* ============================================================== */
+
+.modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.40) !important;     /* fond sombre léger */
+  backdrop-filter: blur(12px) !important;         /* flou moderne */
+  -webkit-backdrop-filter: blur(12px) !important; /* Safari */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease-out !important;
+}
+
+.modal-content {
+  background: white !important;
+  padding: 2.5rem !important;
+  border-radius: 20px !important;
+  width: 90% !important;
+  max-width: 480px !important;
+  text-align: center !important;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25) !important;
+  animation: popIn 0.4s ease-out forwards !important;
+  position: relative !important;
+}
+
+/* Icône succès */
+.success-modal .success-icon {
+  font-size: 5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Numéro en évidence */
+.highlight {
+  background: #ecfdf5 !important;
+  color: #065f46 !important;
+  padding: 1rem 1.5rem !important;
+  border-radius: 14px !important;
+  font-weight: bold !important;
+  font-size: 1.5rem !important;
+  margin: 1.5rem 0 !important;
+  font-family: ui-monospace, monospace !important;
+}
+
+/* Texte discret */
+.text-muted {
+  color: #6b7280 !important;
+  font-style: italic !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Boutons dans la modale de confirmation */
+.modal-actions {
+  margin-top: 2rem !important;
+  display: flex !important;
+  gap: 1rem !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-confirm   { 
+  background: #10b981 !important; 
+  color: white !important; 
+}
+.btn-cancel,
+.btn-close    { 
+  background: #ef4444 !important; 
+  color: white !important; 
+}
+
+.btn-confirm,
+.btn-cancel,
+.btn-close {
+  padding: 0.9rem 2rem !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important  ;
+  min-width: 130px !important;
+  transition: all 0.2s !important;
+}
+
+.btn-confirm:hover { background: #059669 !important; }
+.btn-cancel:hover,
+.btn-close:hover   { background: #dc2626 !important; }
+
+/* Animations douces */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+/* ============================================================== */
+/*  CHAMP TÉLÉPHONE AVEC INDICATIF                               */
+/* ============================================================== */
+
+.phone-input-wrapper {
+  display: flex;
+  gap: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.country-select-wrapper {
+  position: relative;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+}
+
+.country-select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 12px 10px 12px 12px;
+  font-size: 1rem;
+  width: 100px;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 600;
+}
+
+.country-select:focus {
+  outline: none;
+}
+
+.phone-input {
+  flex: 1;
+  border: none !important;
+  padding: 12px 14px;
+  font-size: 1rem;
+}
+
+.phone-input:focus {
+  outline: none;
+}
+
+/* Optionnel : petite flèche personnalisée pour le select */
+.country-select-wrapper::after {
+  content: '▼';
+  right: 8px;
+
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 0.8rem;
+  color: #64748b;
+}
