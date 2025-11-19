@@ -109,4 +109,27 @@ public class NumeroAssignService {
         response.setMessages(messages); // ← ajouter les messages à la réponse
         return response;
     }
+    
+    @Transactional(readOnly = true)
+public List<PossedeResponseDTO> getNumerosByUserId(Long idUtilisateur) {
+
+    logger.info("Récupération des numéros pour utilisateurId={}", idUtilisateur);
+
+    // Vérifier si l'utilisateur existe
+    User user = userRepository.findById(idUtilisateur)
+            .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+    // Récupérer toutes les associations User ↔ Numero
+    List<Possede> possedes = possedeRepository.findByUtilisateur_Id(idUtilisateur);
+
+    List<PossedeResponseDTO> responseList = new ArrayList<>();
+
+    for (Possede p : possedes) {
+        PossedeResponseDTO dto = new PossedeResponseDTO(p.getUtilisateur(), p.getNumero());
+        responseList.add(dto);
+    }
+
+    return responseList;
+}
+
 }

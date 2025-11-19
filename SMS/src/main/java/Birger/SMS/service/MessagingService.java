@@ -1,6 +1,7 @@
 package Birger.SMS.service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import com.twilio.rest.api.v2010.account.Message.Status;
 import com.twilio.rest.api.v2010.account.MessageCreator;
 import com.twilio.type.PhoneNumber;
 
+import Birger.SMS.dto.PossedeResponseDTO;
 import Birger.SMS.model.SMS;
 import Birger.SMS.utils.TwilioErrorHandler;
 
@@ -28,23 +30,74 @@ public class MessagingService {
     @Value("${twilio.authToken}")
     private String authToken;
 
-    /**
-     * Méthode publique pour envoyer un SMS
-     */
-    public Map<String, Object> envoyerSMS(SMS sms) {
+    private final NumeroAssignService numeroAssignService;
+
+    public MessagingService(NumeroAssignService numeroAssignService) {
+        this.numeroAssignService = numeroAssignService;
+    }
+
+    // ------------------ SMS ------------------
+
+    public Map<String, Object> envoyerSMSAvecUserId(Long userId, SMS sms) {
+        List<PossedeResponseDTO> numeros = numeroAssignService.getNumerosByUserId(userId);
+
+        if (numeros.isEmpty()) {
+            throw new RuntimeException("Aucun numéro associé à cet utilisateur");
+        }
+
+        // Utiliser le premier numéro assigné à l'utilisateur
+        PossedeResponseDTO numeroChoisi = numeros.get(0);
+        sms.setExpediteur(numeroChoisi.getValeurNumero());
+
         return envoyerMessage(sms, false);
     }
 
-    /**
-     * Méthode publique pour envoyer un WhatsApp
-     */
-    public Map<String, Object> envoyerWhatsApp(SMS sms) {
+    public Map<String, Object> envoyerSMSAvecUserIdEtNumero(Long userId, Long idNumero, SMS sms) {
+        List<PossedeResponseDTO> numeros = numeroAssignService.getNumerosByUserId(userId);
+
+        PossedeResponseDTO numeroChoisi = numeros.stream()
+                .filter(n -> n.getIdNumero().equals(idNumero))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(
+                        "Le numéro choisi n'appartient pas à l'utilisateur id=" + userId));
+
+        // Remplacer le champ expediteur par le numéro réel
+        sms.setExpediteur(numeroChoisi.getValeurNumero());
+
+        return envoyerMessage(sms, false);
+    }
+
+    // ------------------ WhatsApp ------------------
+
+    public Map<String, Object> envoyerWhatsAppAvecUserId(Long userId, SMS sms) {
+        List<PossedeResponseDTO> numeros = numeroAssignService.getNumerosByUserId(userId);
+
+        if (numeros.isEmpty()) {
+            throw new RuntimeException("Aucun numéro associé à cet utilisateur");
+        }
+
+        PossedeResponseDTO numeroChoisi = numeros.get(0);
+        sms.setExpediteur(numeroChoisi.getValeurNumero());
+
         return envoyerMessage(sms, true);
     }
 
-    /**
-     * Méthode interne générique pour envoyer SMS ou WhatsApp
-     */
+    public Map<String, Object> envoyerWhatsAppAvecUserIdEtNumero(Long userId, Long idNumero, SMS sms) {
+        List<PossedeResponseDTO> numeros = numeroAssignService.getNumerosByUserId(userId);
+
+        PossedeResponseDTO numeroChoisi = numeros.stream()
+                .filter(n -> n.getIdNumero().equals(idNumero))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(
+                        "Le numéro choisi n'appartient pas à l'utilisateur id=" + userId));
+
+        sms.setExpediteur(numeroChoisi.getValeurNumero());
+
+        return envoyerMessage(sms, true);
+    }
+
+    // ------------------ Méthode interne ------------------
+
     private Map<String, Object> envoyerMessage(SMS sms, boolean isWhatsapp) {
         Map<String, Object> response = new HashMap<>();
 

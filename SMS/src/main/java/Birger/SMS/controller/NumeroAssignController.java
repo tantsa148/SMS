@@ -1,6 +1,9 @@
 package Birger.SMS.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -11,6 +14,7 @@ import Birger.SMS.dto.PossedeDTO;
 import Birger.SMS.dto.PossedeResponseDTO;
 import Birger.SMS.security.JwtUtil;
 import Birger.SMS.service.NumeroAssignService;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/numero-assign")
@@ -42,4 +46,18 @@ public class NumeroAssignController {
                     .body("Erreur lors de la création : " + e.getMessage());
         }
     }
+        @GetMapping("/numeros")
+        public List<PossedeResponseDTO> getNumeros(HttpServletRequest request) {
+
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                throw new RuntimeException("Token invalide ou manquant");
+            }
+
+            String token = authHeader.substring(7);
+
+            Long userId = JwtUtil.extractUserId(token);
+
+            return numeroAssignService.getNumerosByUserId(userId);
+        }
 }
