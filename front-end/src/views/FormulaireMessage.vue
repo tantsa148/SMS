@@ -2,19 +2,33 @@
   <div class="form-container">
     <h2>Envoyer un message</h2>
     <form @submit.prevent="handleSubmit">
-      <!-- Sélecteur de plateforme -->
+      <!-- Sélecteur plateforme -->
       <div class="form-group">
         <label for="platform">Plateforme</label>
-        <select id="platform" v-model="platform" required>
-          <option value="">Sélectionnez une option</option>
-          <option value="whatsapp">WhatsApp</option>
+        <select id="platform" v-model="platform" disabled>
+          <!-- Désactivé car l'API ne l'utilise plus -->
           <option value="sms">SMS</option>
         </select>
       </div>
 
-      <!-- Sélecteur pays + numéro -->
+      <!-- Sélecteur numéro expéditeur -->
       <div class="form-group">
-        <label for="numero">Numéro</label>
+        <label for="expediteur">Numéro expéditeur</label>
+        <select id="expediteur" v-model="selectedExpediteurId" required>
+          <option value="">Sélectionnez un numéro</option>
+          <option
+            v-for="n in numerosAssignes"
+            :key="n.idNumero"
+            :value="n.idNumero"
+          >
+            {{ n.valeurNumero }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Sélecteur pays + numéro destinataire -->
+      <div class="form-group">
+        <label for="numero">Numéro destinataire</label>
         <div class="row">
           <div class="col">
             <select v-model="selectedCountryCode" required>
@@ -52,13 +66,14 @@
     </form>
 
     <!-- Prévisualisation -->
-    <div
-      v-if="submitted"
-      :class="['preview', messageStatus === 'success' ? 'success' : 'error']"
-    >
+      <div
+        v-if="submitted"
+        :class="['preview', messageStatus !== 'failed' ? 'success' : 'error']"
+      >
+
       <h3>Données soumises :</h3>
-      <p><strong>Plateforme :</strong> {{ platform }}</p>
-      <p><strong>Numéro complet :</strong> {{ fullNumber }}</p>
+      <p><strong>Numéro expéditeur :</strong> {{ selectedExpediteur?.valeurNumero || selectedExpediteurId }}</p>
+      <p><strong>Numéro destinataire :</strong> {{ fullNumber }}</p>
       <p><strong>Message :</strong> {{ message }}</p>
       <p><strong>Status :</strong> {{ messageStatus }}</p>
       <p v-if="errorMessage"><strong>Erreur :</strong> {{ errorMessage }}</p>
@@ -67,61 +82,79 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import countries from '../assets/countries.json'
 import { sendMessage } from '../services/smsService'
+import type { NumeroAssigne } from '../services/numeroAssignService'
+import { getNumerosAssignes } from '../services/numeroAssignService'
 import '../assets/css/message-form.css'
 
-const platform = ref('')
+// Plateforme (désactivée, API SMS uniquement)
+const platform = ref('sms')
+
+// Sélecteur expéditeur (idNumero)
+const selectedExpediteurId = ref<number | null>(null)
+const numerosAssignes = ref<NumeroAssigne[]>([])
+
+// Pays + numéro destinataire
 const selectedCountryCode = ref('')
 const number = ref('')
+
+// Message
 const message = ref('')
+
+// Prévisualisation
 const submitted = ref(false)
+const messageStatus = ref('')
+const errorMessage = ref('')
 
-const messageStatus = ref('')   // status success / failed
-const errorMessage = ref('')    // message d'erreur Twilio
-
+// Numéro complet destinataire
 const fullNumber = computed(() => {
   if (!selectedCountryCode.value || !number.value) return ''
   const cleanNumber = number.value.replace(/\D/g, '')
   return selectedCountryCode.value + cleanNumber
 })
 
+// Numéro expéditeur sélectionné (objet complet)
+const selectedExpediteur = computed(() =>
+  numerosAssignes.value.find(n => n.idNumero === selectedExpediteurId.value)
+)
+
+// Charger les numéros assignés
+onMounted(async () => {
+  try {
+    numerosAssignes.value = await getNumerosAssignes()
+    selectedExpediteurId.value = numerosAssignes.value[0]?.idNumero ?? null
+  } catch (e) {
+    console.error('Erreur chargement numéros assignés :', e)
+  }
+})
+
+// Soumission
 const handleSubmit = async () => {
-  if (!platform.value) {
-    alert('Veuillez choisir une plateforme.')
+  if (!selectedExpediteurId.value) {
+    alert('Veuillez choisir un numéro expéditeur.')
     return
   }
 
   submitted.value = true
 
   const payload = {
-    expediteur: '+14155238886',
     destinataire: fullNumber.value,
-    messageTexte: {
-      contenu: message.value
-    }
+    messageTexte: { contenu: message.value },
+    idNumero: selectedExpediteurId.value
   }
 
   try {
-    const response = await sendMessage(payload, platform.value)
+    const response = await sendMessage(payload)
 
-    // Stocker le status et l’erreur Twilio
-    messageStatus.value = response.status || 'unknown'
-    errorMessage.value = response.errorMessage || response.message || ''
+    messageStatus.value = response.status
+    errorMessage.value = response.errorMessage || ''
 
-    console.log('Réponse Twilio :', response)
+    console.log('Réponse API :', response)
   } catch (error: any) {
-    console.error('Erreur envoi :', error)
-
     messageStatus.value = 'failed'
-
-    if (error.response && error.response.data) {
-      errorMessage.value =
-        error.response.data.errorMessage || error.response.data.message || 'Erreur inconnue'
-    } else {
-      errorMessage.value = error.message || 'Erreur inconnue'
-    }
+    errorMessage.value = error.message || 'Erreur inconnue'
   }
 }
 </script>

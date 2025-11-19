@@ -1,27 +1,22 @@
-import api from './api' // ton instance axios
+import api from './api'
 
-interface MessagePayload {
-  expediteur: string
+export interface MessagePayload {
   destinataire: string
   messageTexte: {
     contenu: string
   }
+  idNumero: number
 }
 
-interface MessageResponse {
+export interface MessageResponse {
   status: string
   errorMessage?: string
   [key: string]: any
 }
 
-export const sendMessage = async (payload: MessagePayload, platform: string): Promise<MessageResponse> => {
+export const sendMessage = async (payload: MessagePayload): Promise<MessageResponse> => {
   try {
-    const endpoint =
-      platform === 'whatsapp'
-        ? '/api/whatsapp/send'
-        : '/api/sms/send'
-
-    const response = await api.post(endpoint, payload)
+    const response = await api.post('/api/sms/send', payload)
 
     // Normaliser la réponse pour la vue
     return {
