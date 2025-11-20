@@ -6,6 +6,7 @@ export interface MessagePayload {
     contenu: string
   }
   idNumero: number
+  platform: 'sms' | 'whatsapp'
 }
 
 export interface MessageResponse {
@@ -16,9 +17,13 @@ export interface MessageResponse {
 
 export const sendMessage = async (payload: MessagePayload): Promise<MessageResponse> => {
   try {
-    const response = await api.post('/api/sms/send', payload)
+    const url =
+      payload.platform === 'whatsapp'
+        ? '/api/whatsapp/send'
+        : '/api/sms/send'
 
-    // Normaliser la réponse pour la vue
+    const response = await api.post(url, payload)
+
     return {
       status: response.data?.status || 'success',
       errorMessage: response.data?.errorMessage || '',
@@ -27,11 +32,13 @@ export const sendMessage = async (payload: MessagePayload): Promise<MessageRespo
   } catch (error: any) {
     console.error('Erreur lors de l’envoi du message :', error)
 
-    // Normaliser l’erreur pour la vue
     if (error.response && error.response.data) {
       return {
         status: 'failed',
-        errorMessage: error.response.data.errorMessage || error.response.data.message || 'Erreur inconnue'
+        errorMessage:
+          error.response.data.errorMessage ||
+          error.response.data.message ||
+          'Erreur inconnue'
       }
     }
 

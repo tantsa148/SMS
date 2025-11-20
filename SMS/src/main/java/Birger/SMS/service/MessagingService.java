@@ -1,5 +1,6 @@
 package Birger.SMS.service;
 
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -8,13 +9,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.rest.api.v2010.account.Message.Status;
 import com.twilio.type.PhoneNumber;
 
 import Birger.SMS.dto.PossedeResponseDTO;
-import Birger.SMS.dto.SendMessageResponseDTO;
+import Birger.SMS.dto.SendMessageDBResponseDTO;
 import Birger.SMS.model.SMS;
-import Birger.SMS.utils.TwilioErrorHandler;
 
 @Service
 public class MessagingService {
@@ -34,7 +34,7 @@ public class MessagingService {
     }
 
     // ------------------ SMS ------------------
-    public SendMessageResponseDTO envoyerSMSAvecUserId(Long userId, SMS sms) {
+    public SendMessageDBResponseDTO envoyerSMSAvecUserId(Long userId, SMS sms) {
         List<PossedeResponseDTO> numeros = numeroAssignService.getNumerosByUserId(userId);
         if (numeros.isEmpty()) {
             throw new RuntimeException("Aucun numéro associé à cet utilisateur");
@@ -43,19 +43,18 @@ public class MessagingService {
         return envoyerMessage(sms, false);
     }
 
-    public SendMessageResponseDTO envoyerSMSAvecUserIdEtNumero(Long userId, Long idNumero, SMS sms) {
+    public SendMessageDBResponseDTO envoyerSMSAvecUserIdEtNumero(Long userId, Long idNumero, SMS sms) {
         PossedeResponseDTO numeroChoisi = numeroAssignService.getNumerosByUserId(userId).stream()
                 .filter(n -> n.getIdNumero().equals(idNumero))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException(
                         "Le numéro choisi n'appartient pas à l'utilisateur id=" + userId));
-
         sms.setExpediteur(numeroChoisi.getValeurNumero());
         return envoyerMessage(sms, false);
     }
 
     // ------------------ WhatsApp ------------------
-    public SendMessageResponseDTO envoyerWhatsAppAvecUserId(Long userId, SMS sms) {
+    public SendMessageDBResponseDTO envoyerWhatsAppAvecUserId(Long userId, SMS sms) {
         List<PossedeResponseDTO> numeros = numeroAssignService.getNumerosByUserId(userId);
         if (numeros.isEmpty()) {
             throw new RuntimeException("Aucun numéro associé à cet utilisateur");
@@ -64,25 +63,24 @@ public class MessagingService {
         return envoyerMessage(sms, true);
     }
 
-    public SendMessageResponseDTO envoyerWhatsAppAvecUserIdEtNumero(Long userId, Long idNumero, SMS sms) {
+    public SendMessageDBResponseDTO envoyerWhatsAppAvecUserIdEtNumero(Long userId, Long idNumero, SMS sms) {
         PossedeResponseDTO numeroChoisi = numeroAssignService.getNumerosByUserId(userId).stream()
                 .filter(n -> n.getIdNumero().equals(idNumero))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException(
                         "Le numéro choisi n'appartient pas à l'utilisateur id=" + userId));
-
         sms.setExpediteur(numeroChoisi.getValeurNumero());
         return envoyerMessage(sms, true);
     }
 
     // ------------------ Méthode interne ------------------
-    private SendMessageResponseDTO envoyerMessage(SMS sms, boolean isWhatsapp) {
+    private SendMessageDBResponseDTO envoyerMessage(SMS sms, boolean isWhatsapp) {
         try {
             if (sms.getDestinataire() == null || sms.getDestinataire().isBlank()) {
-                throw new IllegalArgumentException("Le numéro du destinataire est manquant ou vide.");
+                throw new IllegalArgumentException("Numéro destinataire manquant ou vide.");
             }
             if (sms.getExpediteur() == null || sms.getExpediteur().isBlank()) {
-                throw new IllegalArgumentException("Le numéro de l'expéditeur est manquant ou vide.");
+                throw new IllegalArgumentException("Numéro expéditeur manquant ou vide.");
             }
 
             Twilio.init(accountSid, authToken);
@@ -90,45 +88,57 @@ public class MessagingService {
             String to   = isWhatsapp ? "whatsapp:" + sms.getDestinataire() : sms.getDestinataire();
             String from = isWhatsapp ? "whatsapp:" + sms.getExpediteur()   : sms.getExpediteur();
 
-            Message twilioMsg = Message.creator(
-                    new PhoneNumber(to),
-                    new PhoneNumber(from),
-                    sms.getMessageTexte().getContenu()
-            ).create();
+            // Création du message Twilio
+            com.twilio.rest.api.v2010.account.Message twilioMsg =
+                    com.twilio.rest.api.v2010.account.Message.creator(
+                            new PhoneNumber(to),
+                            new PhoneNumber(from),
+                            sms.getMessageTexte().getContenu()
+                    ).create();
 
-            logger.info("Twilio {} envoyé – SID: {}, status: {}, errorCode: {}",
-                    isWhatsapp ? "WhatsApp" : "SMS",
-                    twilioMsg.getSid(),
-                    twilioMsg.getStatus(),
-                    twilioMsg.getErrorCode());
+            // Récupérer le statut final du message via SID
+            com.twilio.rest.api.v2010.account.Message fetchedMsg =
+                    com.twilio.rest.api.v2010.account.Message.fetcher(twilioMsg.getSid()).fetch();
 
-            return new SendMessageResponseDTO(
-                    sms.getExpediteur(),
+            Status finalStatus = fetchedMsg.getStatus(); // statut final réel
+            Integer errorCode = fetchedMsg.getErrorCode();
+            String errorMessage = fetchedMsg.getErrorMessage();
+
+            logger.info("Message envoyé → SID: {}, statut final: {}", fetchedMsg.getSid(), finalStatus);
+
+            Date dateCreated = fetchedMsg.getDateCreated() != null
+                    ? Date.from(fetchedMsg.getDateCreated().toInstant())
+                    : null;
+
+            return new SendMessageDBResponseDTO(
+                    errorCode == null ? "success" : "failed",
+                    finalStatus != null ? finalStatus.toString() : "unknown",
+                    errorCode,
+                    errorMessage,
+                    isWhatsapp ? "whatsapp" : "sms",
+                    null, // messageId inexistant ici
                     sms.getDestinataire(),
+                    sms.getExpediteur(),
                     sms.getMessageTexte().getContenu(),
-                    twilioMsg.getStatus() != null ? twilioMsg.getStatus().toString() : "UNKNOWN",
-                    twilioMsg.getErrorCode(),
-                    twilioMsg.getErrorMessage(),
-                    twilioMsg.getSid(),
-                    twilioMsg.getDateCreated(),
-                    isWhatsapp ? "whatsapp" : "sms"
+                    fetchedMsg.getSid(),
+                    dateCreated
             );
 
         } catch (Exception e) {
-            logger.error("Erreur lors de l'envoi du message via Twilio", e);
-            // Tu peux aussi créer un DTO d'erreur dédié si tu veux plus de granularité
-            var errorMap = TwilioErrorHandler.handleException(e);
+            logger.error("Échec envoi message → destinataire={}", sms.getDestinataire(), e);
 
-            return new SendMessageResponseDTO(
-                    sms.getExpediteur(),
+            return new SendMessageDBResponseDTO(
+                    "failed",
+                    "error",
+                    400,
+                    e.getMessage(),
+                    isWhatsapp ? "whatsapp" : "sms",
+                    null,
                     sms.getDestinataire(),
-                    sms.getMessageTexte().getContenu(),
-                    "FAILED",
-                    (Integer) errorMap.get("errorCode"),
-                    (String) errorMap.getOrDefault("errorMessage", e.getMessage()),
+                    sms.getExpediteur(),
+                    sms.getMessageTexte() != null ? sms.getMessageTexte().getContenu() : null,
                     null,
-                    null,
-                    isWhatsapp ? "whatsapp" : "sms"
+                    null
             );
         }
     }

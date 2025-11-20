@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import Birger.SMS.dto.SendMessageResponseDTO;
+import Birger.SMS.dto.SendMessageDBResponseDTO;
 import Birger.SMS.model.SMS;
 import Birger.SMS.security.JwtUtil;
 import Birger.SMS.service.MessagingService;
@@ -24,27 +24,28 @@ public class SmsController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<SendMessageResponseDTO> envoyerSms(
+    public ResponseEntity<SendMessageDBResponseDTO> envoyerSms(
             @RequestBody SMS sms,
             HttpServletRequest request) {
 
         Long userId = extractUserIdFromToken(request);
 
-        SendMessageResponseDTO response;
+        SendMessageDBResponseDTO response;
 
         if (sms.getIdNumero() != null) {
+            // Envoi avec numéro choisi
             response = messagingService.envoyerSMSAvecUserIdEtNumero(userId, sms.getIdNumero(), sms);
         } else {
+            // Envoi avec premier numéro disponible de l'utilisateur
             response = messagingService.envoyerSMSAvecUserId(userId, sms);
         }
 
-        // 200 OK avec le DTO → Spring le sérialise automatiquement en JSON
         return ResponseEntity.ok(response);
     }
 
-    // ──────────────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     // Méthode utilitaire pour extraire et valider le JWT
-    // ──────────────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
     private Long extractUserIdFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
 
@@ -56,9 +57,9 @@ public class SmsController {
         return JwtUtil.extractUserId(token); // lève exception si token invalide
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // Gestion globale des erreurs (optionnel mais recommandé)
-    // ──────────────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
+    // Gestion globale des erreurs
+    // ────────────────────────────────────────────────
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
         var error = new ErrorResponse("error", ex.getMessage());

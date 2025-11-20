@@ -14,20 +14,20 @@ import Birger.SMS.service.SmsFromDatabaseService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/api/sms-db")
-public class SmsFromDatabaseController {
+@RequestMapping("/api/whatsapp-db")
+public class WhatsAppFromDatabaseController {
 
     private final SmsFromDatabaseService service;
 
-    public SmsFromDatabaseController(SmsFromDatabaseService service) {
+    public WhatsAppFromDatabaseController(SmsFromDatabaseService service) {
         this.service = service;
     }
 
     // ------------------------------------------------------------
-    // 1. SMS – numéro automatique
+    // 1. WhatsApp – numéro automatique
     // ------------------------------------------------------------
     @PostMapping("/send")
-    public ResponseEntity<SendMessageDBResponseDTO> envoyerSmsAuto(
+    public ResponseEntity<SendMessageDBResponseDTO> envoyerWhatsappAuto(
             @RequestBody Map<String, Object> request,
             HttpServletRequest httpRequest) {
 
@@ -35,14 +35,14 @@ public class SmsFromDatabaseController {
         Long messageId = Long.valueOf(request.get("messageId").toString());
         String destinataire = (String) request.get("destinataire");
 
-        return ResponseEntity.ok(service.envoyerMessageDepuisBaseAvecUserId(userId, messageId, destinataire));
+        return ResponseEntity.ok(service.envoyerWhatsappDepuisBaseAvecUserId(userId, messageId, destinataire));
     }
 
     // ------------------------------------------------------------
-    // 2. SMS – numéro choisi
+    // 2. WhatsApp – numéro choisi
     // ------------------------------------------------------------
     @PostMapping("/send/numero")
-    public ResponseEntity<SendMessageDBResponseDTO> envoyerSmsAvecNumero(
+    public ResponseEntity<SendMessageDBResponseDTO> envoyerWhatsappAvecNumero(
             @RequestBody Map<String, Object> request,
             HttpServletRequest httpRequest) {
 
@@ -51,7 +51,7 @@ public class SmsFromDatabaseController {
         Long messageId = Long.valueOf(request.get("messageId").toString());
         String destinataire = (String) request.get("destinataire");
 
-        return ResponseEntity.ok(service.envoyerMessageDepuisBaseAvecUserIdEtNumero(
+        return ResponseEntity.ok(service.envoyerWhatsappDepuisBaseAvecUserIdEtNumero(
                 userId, idNumero, messageId, destinataire));
     }
 

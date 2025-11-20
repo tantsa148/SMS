@@ -1,13 +1,13 @@
 <template>
   <div class="form-container">
     <h2>Envoyer un message</h2>
-    <form @submit.prevent="handleSubmit">
+    <form @submit.prevent="showValidationModal">
       <!-- Sélecteur plateforme -->
       <div class="form-group">
         <label for="platform">Plateforme</label>
-        <select id="platform" v-model="platform" disabled>
-          <!-- Désactivé car l'API ne l'utilise plus -->
+        <select id="platform" v-model="platform">
           <option value="sms">SMS</option>
+          <option value="whatsapp">WhatsApp</option>
         </select>
       </div>
 
@@ -65,19 +65,25 @@
       <button type="submit">Envoyer</button>
     </form>
 
-    <!-- Prévisualisation -->
-      <div
-        v-if="submitted"
-        :class="['preview', messageStatus !== 'failed' ? 'success' : 'error']"
-      >
+    <!-- Modals -->
+    <ValidationModal
+      :visible="showValidation"
+      :platform="platform"
+      :expediteur="selectedExpediteurValeur"
+      :destinataire="fullNumber"
+      :message="message"
+      @close="closeValidationModal"
+      @confirm="confirmSend"
+    />
 
-      <h3>Données soumises :</h3>
-      <p><strong>Numéro expéditeur :</strong> {{ selectedExpediteur?.valeurNumero || selectedExpediteurId }}</p>
-      <p><strong>Numéro destinataire :</strong> {{ fullNumber }}</p>
-      <p><strong>Message :</strong> {{ message }}</p>
-      <p><strong>Status :</strong> {{ messageStatus }}</p>
-      <p v-if="errorMessage"><strong>Erreur :</strong> {{ errorMessage }}</p>
-    </div>
+    <ResponseModal
+      :visible="showResponseModal"
+      :message-status="messageStatus"
+      :error-message="errorMessage"
+      :destinataire="fullNumber"
+      :response-data="responseData"
+      @close="closeResponseModal"
+    />
   </div>
 </template>
 
@@ -87,40 +93,43 @@ import countries from '../assets/countries.json'
 import { sendMessage } from '../services/smsService'
 import type { NumeroAssigne } from '../services/numeroAssignService'
 import { getNumerosAssignes } from '../services/numeroAssignService'
+import ValidationModal from '../components/ValidationModal.vue'
+import ResponseModal from '../components/ResponseModal.vue'
 import '../assets/css/message-form.css'
 
-// Plateforme (désactivée, API SMS uniquement)
+// Variables du formulaire
 const platform = ref('sms')
-
-// Sélecteur expéditeur (idNumero)
 const selectedExpediteurId = ref<number | null>(null)
 const numerosAssignes = ref<NumeroAssigne[]>([])
-
-// Pays + numéro destinataire
 const selectedCountryCode = ref('')
 const number = ref('')
-
-// Message
 const message = ref('')
-
-// Prévisualisation
 const submitted = ref(false)
 const messageStatus = ref('')
 const errorMessage = ref('')
 
-// Numéro complet destinataire
+// États pour les modals
+const showValidation = ref(false)
+const showResponseModal = ref(false)
+const responseData = ref<any>(null)
+
+// Computed properties
 const fullNumber = computed(() => {
   if (!selectedCountryCode.value || !number.value) return ''
   const cleanNumber = number.value.replace(/\D/g, '')
   return selectedCountryCode.value + cleanNumber
 })
 
-// Numéro expéditeur sélectionné (objet complet)
 const selectedExpediteur = computed(() =>
   numerosAssignes.value.find(n => n.idNumero === selectedExpediteurId.value)
 )
 
-// Charger les numéros assignés
+const selectedExpediteurValeur = computed(() => {
+  const expediteur = numerosAssignes.value.find(n => n.idNumero === selectedExpediteurId.value)
+  return expediteur ? expediteur.valeurNumero : ''
+})
+
+// Lifecycle
 onMounted(async () => {
   try {
     numerosAssignes.value = await getNumerosAssignes()
@@ -130,19 +139,50 @@ onMounted(async () => {
   }
 })
 
-// Soumission
-const handleSubmit = async () => {
+// Fonctions pour les modals
+const showValidationModal = () => {
   if (!selectedExpediteurId.value) {
     alert('Veuillez choisir un numéro expéditeur.')
+    return
+  }
+  if (!fullNumber.value) {
+    alert('Veuillez saisir un numéro destinataire valide.')
+    return
+  }
+  if (!message.value) {
+    alert('Veuillez écrire un message.')
+    return
+  }
+  showValidation.value = true
+}
+
+const closeValidationModal = () => {
+  showValidation.value = false
+}
+
+const closeResponseModal = () => {
+  showResponseModal.value = false
+}
+
+const confirmSend = async () => {
+  showValidation.value = false
+  
+  // Validation finale
+  if (!selectedExpediteurId.value) {
+    messageStatus.value = 'failed'
+    errorMessage.value = 'Numéro expéditeur manquant'
+    showResponseModal.value = true
     return
   }
 
   submitted.value = true
 
+  // Payload
   const payload = {
     destinataire: fullNumber.value,
     messageTexte: { contenu: message.value },
-    idNumero: selectedExpediteurId.value
+    idNumero: selectedExpediteurId.value,
+    platform: platform.value as 'sms' | 'whatsapp'
   }
 
   try {
@@ -150,11 +190,14 @@ const handleSubmit = async () => {
 
     messageStatus.value = response.status
     errorMessage.value = response.errorMessage || ''
+    responseData.value = response
 
+    showResponseModal.value = true
     console.log('Réponse API :', response)
   } catch (error: any) {
     messageStatus.value = 'failed'
     errorMessage.value = error.message || 'Erreur inconnue'
+    showResponseModal.value = true
   }
 }
 </script>

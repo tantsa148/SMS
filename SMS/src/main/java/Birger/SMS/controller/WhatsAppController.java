@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import Birger.SMS.dto.SendMessageResponseDTO;
+import Birger.SMS.dto.SendMessageDBResponseDTO;
 import Birger.SMS.model.SMS;
 import Birger.SMS.security.JwtUtil;
 import Birger.SMS.service.MessagingService;
@@ -24,22 +24,22 @@ public class WhatsAppController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<SendMessageResponseDTO> envoyerWhatsApp(
+    public ResponseEntity<SendMessageDBResponseDTO> envoyerWhatsApp(
             @RequestBody SMS sms,
             HttpServletRequest request) {
 
         Long userId = extractUserIdFromToken(request);
 
-        SendMessageResponseDTO response = sms.getIdNumero() != null
+        SendMessageDBResponseDTO response = sms.getIdNumero() != null
                 ? messagingService.envoyerWhatsAppAvecUserIdEtNumero(userId, sms.getIdNumero(), sms)
                 : messagingService.envoyerWhatsAppAvecUserId(userId, sms);
 
         return ResponseEntity.ok(response);
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // Méthode privée partagée (idéalement à mettre dans une classe commune si tu as plusieurs contrôleurs)
-    // ──────────────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
+    // Méthode privée pour extraire le userId depuis JWT
+    // ────────────────────────────────────────────────
     private Long extractUserIdFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -49,15 +49,15 @@ public class WhatsAppController {
         return JwtUtil.extractUserId(token); // lève exception si invalide
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // Gestion centralisée des erreurs (optionnel mais propre)
-    // ──────────────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────
+    // Gestion centralisée des erreurs
+    // ────────────────────────────────────────────────
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
         return ResponseEntity.badRequest()
                 .body(new ErrorResponse("error", ex.getMessage()));
     }
 
-    // DTO d'erreur simple et réutilisable
+    // DTO simple pour les erreurs
     record ErrorResponse(String status, String message) {}
 }
