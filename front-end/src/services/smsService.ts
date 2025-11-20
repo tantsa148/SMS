@@ -1,29 +1,29 @@
-import api from './api' // ton instance axios
+import api from './api'
 
-interface MessagePayload {
-  expediteur: string
+export interface MessagePayload {
   destinataire: string
   messageTexte: {
     contenu: string
   }
+  idNumero: number
+  platform: 'sms' | 'whatsapp'
 }
 
-interface MessageResponse {
+export interface MessageResponse {
   status: string
   errorMessage?: string
   [key: string]: any
 }
 
-export const sendMessage = async (payload: MessagePayload, platform: string): Promise<MessageResponse> => {
+export const sendMessage = async (payload: MessagePayload): Promise<MessageResponse> => {
   try {
-    const endpoint =
-      platform === 'whatsapp'
+    const url =
+      payload.platform === 'whatsapp'
         ? '/api/whatsapp/send'
         : '/api/sms/send'
 
-    const response = await api.post(endpoint, payload)
+    const response = await api.post(url, payload)
 
-    // Normaliser la réponse pour la vue
     return {
       status: response.data?.status || 'success',
       errorMessage: response.data?.errorMessage || '',
@@ -32,11 +32,13 @@ export const sendMessage = async (payload: MessagePayload, platform: string): Pr
   } catch (error: any) {
     console.error('Erreur lors de l’envoi du message :', error)
 
-    // Normaliser l’erreur pour la vue
     if (error.response && error.response.data) {
       return {
         status: 'failed',
-        errorMessage: error.response.data.errorMessage || error.response.data.message || 'Erreur inconnue'
+        errorMessage:
+          error.response.data.errorMessage ||
+          error.response.data.message ||
+          'Erreur inconnue'
       }
     }
 

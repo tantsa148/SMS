@@ -14,56 +14,48 @@ import Birger.SMS.service.MessagingService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/api/sms")
-public class SmsController {
+@RequestMapping("/api/whatsapp")
+public class WhatsAppController {
 
     private final MessagingService messagingService;
 
-    public SmsController(MessagingService messagingService) {
+    public WhatsAppController(MessagingService messagingService) {
         this.messagingService = messagingService;
     }
 
     @PostMapping("/send")
-    public ResponseEntity<SendMessageDBResponseDTO> envoyerSms(
+    public ResponseEntity<SendMessageDBResponseDTO> envoyerWhatsApp(
             @RequestBody SMS sms,
             HttpServletRequest request) {
 
         Long userId = extractUserIdFromToken(request);
 
-        SendMessageDBResponseDTO response;
-
-        if (sms.getIdNumero() != null) {
-            // Envoi avec numéro choisi
-            response = messagingService.envoyerSMSAvecUserIdEtNumero(userId, sms.getIdNumero(), sms);
-        } else {
-            // Envoi avec premier numéro disponible de l'utilisateur
-            response = messagingService.envoyerSMSAvecUserId(userId, sms);
-        }
+        SendMessageDBResponseDTO response = sms.getIdNumero() != null
+                ? messagingService.envoyerWhatsAppAvecUserIdEtNumero(userId, sms.getIdNumero(), sms)
+                : messagingService.envoyerWhatsAppAvecUserId(userId, sms);
 
         return ResponseEntity.ok(response);
     }
 
     // ────────────────────────────────────────────────
-    // Méthode utilitaire pour extraire et valider le JWT
+    // Méthode privée pour extraire le userId depuis JWT
     // ────────────────────────────────────────────────
     private Long extractUserIdFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new RuntimeException("Token JWT manquant ou invalide");
         }
-
         String token = authHeader.substring(7);
-        return JwtUtil.extractUserId(token); // lève exception si token invalide
+        return JwtUtil.extractUserId(token); // lève exception si invalide
     }
 
     // ────────────────────────────────────────────────
-    // Gestion globale des erreurs
+    // Gestion centralisée des erreurs
     // ────────────────────────────────────────────────
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
-        var error = new ErrorResponse("error", ex.getMessage());
-        return ResponseEntity.badRequest().body(error);
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse("error", ex.getMessage()));
     }
 
     // DTO simple pour les erreurs

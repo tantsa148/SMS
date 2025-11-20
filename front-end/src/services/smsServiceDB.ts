@@ -1,9 +1,8 @@
 import api from './api' // ton instance Axios avec le token
-
 export interface SmsPayload {
+  idNumero: number
   messageId: number
   destinataire: string
-  expediteur: string
 }
 
 export const smsService = {
@@ -12,9 +11,9 @@ export const smsService = {
     let url = ''
 
     if (platform === 'sms') {
-      url = '/api/sms-db/send'
+      url = '/api/sms-db/send/numero'
     } else if (platform === 'whatsapp') {
-      url = '/api/whatsapp-db/send'
+      url = '/api/whatsapp-db/send/numero'
     } else {
       throw new Error(`Plateforme inconnue : ${platform}`)
     }
