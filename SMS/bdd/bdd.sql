@@ -59,32 +59,14 @@ CREATE TABLE disponible_sur (
 );
 
 
-
------------------------
--------scrip a modifier
------------------------
-CREATE TABLE Numero (
-    id_numero INT PRIMARY KEY,
-    valeur_numero VARCHAR(20)
-);
-
-CREATE TABLE Possede (
-    id_utilisateur INT,
-    id_numero INT,
-    PRIMARY KEY (id_utilisateur, id_numero),
-    FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur),
-    FOREIGN KEY (id_numero) REFERENCES Numero(id_numero)
-);
-
-CREATE TABLE Plateforme (
-    id_plateforme INT PRIMARY KEY,
-    nom_plateforme VARCHAR(50)
-);
-
-CREATE TABLE DisponibleSur (
-    id_numero INT,
-    id_plateforme INT,
-    PRIMARY KEY (id_numero, id_plateforme),
-    FOREIGN KEY (id_numero) REFERENCES Numero(id_numero),
-    FOREIGN KEY (id_plateforme) REFERENCES Plateforme(id_plateforme)
+CREATE TABLE messages_envoyes (
+    id SERIAL PRIMARY KEY,
+    id_numero BIGINT NOT NULL,        -- référence au numéro utilisé
+    destinataire VARCHAR(50) NOT NULL,
+    contenu TEXT,
+    statut VARCHAR(20),               -- "success", "failed", etc.
+    error_code INT,
+    error_message TEXT,
+    twilio_sid VARCHAR(100),
+    date_created TIMESTAMP
 );

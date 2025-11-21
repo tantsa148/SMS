@@ -1,41 +1,228 @@
 /* ============================================================== */
-/*  MODALES – STYLE MODERNE 2025 (fond léger + flou + contraste) */
-/*  Colle ça à la fin de numero-form.css → garanti sans surprise   */
+/*                       MODALES – STYLES                         */
 /* ============================================================== */
 
+.modal-overlay,
 .modal-backdrop {
   position: fixed !important;
   inset: 0 !important;
-  background: rgba(0, 0, 0, 0.40) !important;     /* fond sombre léger */
-  backdrop-filter: blur(12px) !important;         /* flou moderne */
-  -webkit-backdrop-filter: blur(12px) !important; /* Safari */
+  background: rgba(0, 0, 0, 0.40) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   z-index: 9999 !important;
-  padding: 1rem;
+  padding: 1rem !important;
   animation: fadeIn 0.3s ease-out !important;
 }
 
 .modal-content {
   background: white !important;
-  padding: 2.5rem !important;
   border-radius: 20px !important;
   width: 90% !important;
-  max-width: 480px !important;
-  text-align: center !important;
+  max-width: 500px !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
   box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25) !important;
+  padding: 2.5rem !important;
   animation: popIn 0.4s ease-out forwards !important;
   position: relative !important;
 }
 
-/* Icône succès */
+/* ============================================================== */
+/*                       MODAL HEADER                             */
+/* ============================================================== */
+.modal-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 1.5rem !important;
+  border-bottom: 1px solid #dee2e6 !important;
+}
+
+.modal-header h2 {
+  margin: 0 !important;
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+}
+
+.close-btn {
+  background: none !important;
+  border: none !important;
+  font-size: 1.7rem !important;
+  cursor: pointer !important;
+  color: #6c757d !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.close-btn:hover {
+  color: #495057 !important;
+}
+
+/* ============================================================== */
+/*                     CONTENU DE LA MODALE                       */
+/* ============================================================== */
+
+.modal-body {
+  padding: 1.5rem !important;
+}
+
+.form-group {
+  margin-bottom: 1.5rem !important;
+}
+
+.form-group label {
+  display: block !important;
+  margin-bottom: 0.5rem !important;
+  font-weight: 600 !important;
+}
+
+/* ============================================================== */
+/*               CHAMP TÉLÉPHONE + INDICATIF                      */
+/* ============================================================== */
+
+.phone-input-wrapper {
+  display: flex !important;
+  gap: 0 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  background: white !important;
+}
+
+.country-select-wrapper {
+  position: relative !important;
+  background: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+.country-select {
+  appearance: none !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 12px 10px 12px 12px !important;
+  font-size: 1rem !important;
+  width: 100px !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+}
+
+.country-select:focus {
+  outline: none !important;
+}
+
+.country-select-wrapper::after {
+  content: '▼' !important;
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  pointer-events: none !important;
+  font-size: 0.8rem !important;
+  color: #64748b !important;
+}
+
+.phone-input {
+  flex: 1 !important;
+  border: none !important;
+  padding: 12px 14px !important;
+  font-size: 1rem !important;
+}
+
+.phone-input:focus {
+  outline: none !important;
+}
+
+/* ============================================================== */
+/*                   ACTIONS / BOUTONS                            */
+/* ============================================================== */
+
+.modal-actions {
+  margin-top: 2rem !important;
+  display: flex !important;
+  gap: 1rem !important;
+  justify-content: flex-end !important;
+  flex-wrap: wrap !important;
+  padding-top: 1rem !important;
+  border-top: 1px solid #dee2e6 !important;
+}
+
+.btn-cancel {
+  padding: 10px 20px !important;
+  border: 1px solid #6c757d !important;
+  background: white !important;
+  color: #6c757d !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+}
+
+.btn-cancel:hover {
+  background: #f8f9fa !important;
+}
+
+.btn-submit,
+.btn-confirm,
+.btn-close {
+  padding: 0.9rem 2rem !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  min-width: 130px !important;
+  transition: all 0.2s !important;
+}
+
+.btn-submit {
+  background-color: #0d6efd !important;
+  color: white !important;
+}
+
+.btn-submit.btn-disabled,
+.btn-submit:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background-color: #0b5ed7 !important;
+}
+
+.btn-confirm {
+  background: #10b981 !important;
+  color: white !important;
+}
+
+.btn-confirm:hover {
+  background: #059669 !important;
+}
+
+.btn-cancel,
+.btn-close {
+  background: #ef4444 !important;
+  color: white !important;
+}
+
+.btn-cancel:hover,
+.btn-close:hover {
+  background: #dc2626 !important;
+}
+
+/* ============================================================== */
+/*                    MODALE CONFIRMATION                         */
+/* ============================================================== */
+
 .success-modal .success-icon {
   font-size: 5rem !important;
   margin-bottom: 0.5rem !important;
 }
 
-/* Numéro en évidence */
 .highlight {
   background: #ecfdf5 !important;
   color: #065f46 !important;
@@ -47,117 +234,22 @@
   font-family: ui-monospace, monospace !important;
 }
 
-/* Texte discret */
 .text-muted {
   color: #6b7280 !important;
   font-style: italic !important;
   margin-top: 0.5rem !important;
 }
 
-/* Boutons dans la modale de confirmation */
-.modal-actions {
-  margin-top: 2rem !important;
-  display: flex !important;
-  gap: 1rem !important;
-  justify-content: center !important;
-  flex-wrap: wrap !important;
-}
+/* ============================================================== */
+/*                         ANIMATIONS                              */
+/* ============================================================== */
 
-.btn-confirm   { 
-  background: #10b981 !important; 
-  color: white !important; 
-}
-.btn-cancel,
-.btn-close    { 
-  background: #ef4444 !important; 
-  color: white !important; 
-}
-
-.btn-confirm,
-.btn-cancel,
-.btn-close {
-  padding: 0.9rem 2rem !important;
-  border: none !important;
-  border-radius: 14px !important;
-  font-weight: 600 !important;
-  cursor: pointer !important  ;
-  min-width: 130px !important;
-  transition: all 0.2s !important;
-}
-
-.btn-confirm:hover { background: #059669 !important; }
-.btn-cancel:hover,
-.btn-close:hover   { background: #dc2626 !important; }
-
-/* Animations douces */
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
 @keyframes popIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8) translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-/* ============================================================== */
-/*  CHAMP TÉLÉPHONE AVEC INDICATIF                               */
-/* ============================================================== */
-
-.phone-input-wrapper {
-  display: flex;
-  gap: 0;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  overflow: hidden;
-  background: white;
-}
-
-.country-select-wrapper {
-  position: relative;
-  background: #f8fafc;
-  border-right: 1px solid #e2e8f0;
-}
-
-.country-select {
-  appearance: none;
-  background: transparent;
-  border: none;
-  padding: 12px 10px 12px 12px;
-  font-size: 1rem;
-  width: 100px;
-  cursor: pointer;
-  text-align: left;
-  font-weight: 600;
-}
-
-.country-select:focus {
-  outline: none;
-}
-
-.phone-input {
-  flex: 1;
-  border: none !important;
-  padding: 12px 14px;
-  font-size: 1rem;
-}
-
-.phone-input:focus {
-  outline: none;
-}
-
-/* Optionnel : petite flèche personnalisée pour le select */
-.country-select-wrapper::after {
-  content: '▼';
-  right: 8px;
-
-  transform: translateY(-50%);
-  pointer-events: none;
-  font-size: 0.8rem;
-  color: #64748b;
+  from { opacity: 0; transform: scale(0.8) translateY(30px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
