@@ -14,7 +14,9 @@ import com.twilio.type.PhoneNumber;
 
 import Birger.SMS.dto.PossedeResponseDTO;
 import Birger.SMS.dto.SendMessageDBResponseDTO;
+import Birger.SMS.model.MessageEnvoye;
 import Birger.SMS.model.SMS;
+import Birger.SMS.repository.MessageEnvoyeRepository;
 
 @Service
 public class MessagingService {
@@ -28,9 +30,12 @@ public class MessagingService {
     private String authToken;
 
     private final NumeroAssignService numeroAssignService;
+    private final MessageEnvoyeRepository messageEnvoyeRepository;
 
-    public MessagingService(NumeroAssignService numeroAssignService) {
+    public MessagingService(NumeroAssignService numeroAssignService,
+                            MessageEnvoyeRepository messageEnvoyeRepository) {
         this.numeroAssignService = numeroAssignService;
+        this.messageEnvoyeRepository = messageEnvoyeRepository;
     }
 
     // ------------------ SMS ------------------
@@ -39,8 +44,9 @@ public class MessagingService {
         if (numeros.isEmpty()) {
             throw new RuntimeException("Aucun numéro associé à cet utilisateur");
         }
-        sms.setExpediteur(numeros.get(0).getValeurNumero());
-        return envoyerMessage(sms, false);
+        PossedeResponseDTO numeroChoisi = numeros.get(0);
+        sms.setExpediteur(numeroChoisi.getValeurNumero());
+        return envoyerMessage(sms, numeroChoisi.getIdNumero(), false);
     }
 
     public SendMessageDBResponseDTO envoyerSMSAvecUserIdEtNumero(Long userId, Long idNumero, SMS sms) {
@@ -50,7 +56,7 @@ public class MessagingService {
                 .orElseThrow(() -> new RuntimeException(
                         "Le numéro choisi n'appartient pas à l'utilisateur id=" + userId));
         sms.setExpediteur(numeroChoisi.getValeurNumero());
-        return envoyerMessage(sms, false);
+        return envoyerMessage(sms, idNumero, false);
     }
 
     // ------------------ WhatsApp ------------------
@@ -59,8 +65,9 @@ public class MessagingService {
         if (numeros.isEmpty()) {
             throw new RuntimeException("Aucun numéro associé à cet utilisateur");
         }
-        sms.setExpediteur(numeros.get(0).getValeurNumero());
-        return envoyerMessage(sms, true);
+        PossedeResponseDTO numeroChoisi = numeros.get(0);
+        sms.setExpediteur(numeroChoisi.getValeurNumero());
+        return envoyerMessage(sms, numeroChoisi.getIdNumero(), true);
     }
 
     public SendMessageDBResponseDTO envoyerWhatsAppAvecUserIdEtNumero(Long userId, Long idNumero, SMS sms) {
@@ -70,11 +77,11 @@ public class MessagingService {
                 .orElseThrow(() -> new RuntimeException(
                         "Le numéro choisi n'appartient pas à l'utilisateur id=" + userId));
         sms.setExpediteur(numeroChoisi.getValeurNumero());
-        return envoyerMessage(sms, true);
+        return envoyerMessage(sms, idNumero, true);
     }
 
     // ------------------ Méthode interne ------------------
-    private SendMessageDBResponseDTO envoyerMessage(SMS sms, boolean isWhatsapp) {
+    private SendMessageDBResponseDTO envoyerMessage(SMS sms, Long idNumero, boolean isWhatsapp) {
         try {
             if (sms.getDestinataire() == null || sms.getDestinataire().isBlank()) {
                 throw new IllegalArgumentException("Numéro destinataire manquant ou vide.");
@@ -100,15 +107,29 @@ public class MessagingService {
             com.twilio.rest.api.v2010.account.Message fetchedMsg =
                     com.twilio.rest.api.v2010.account.Message.fetcher(twilioMsg.getSid()).fetch();
 
-            Status finalStatus = fetchedMsg.getStatus(); // statut final réel
+            Status finalStatus = fetchedMsg.getStatus();
             Integer errorCode = fetchedMsg.getErrorCode();
             String errorMessage = fetchedMsg.getErrorMessage();
-
-            logger.info("Message envoyé → SID: {}, statut final: {}", fetchedMsg.getSid(), finalStatus);
-
             Date dateCreated = fetchedMsg.getDateCreated() != null
                     ? Date.from(fetchedMsg.getDateCreated().toInstant())
                     : null;
+
+            // ----------------- Enregistrement en base -----------------
+            MessageEnvoye message = new MessageEnvoye();
+            message.setIdNumero(idNumero);
+            message.setDestinataire(sms.getDestinataire());
+            //message.setTypeMessage(isWhatsapp ? "whatsapp" : "sms");
+            message.setContenu(sms.getMessageTexte().getContenu());
+            message.setStatut(errorCode == null ? "success" : "failed");
+            message.setErrorCode(errorCode);
+            message.setErrorMessage(errorMessage);
+            message.setTwilioSid(fetchedMsg.getSid());
+            message.setDateCreated(dateCreated);
+
+            messageEnvoyeRepository.save(message);
+            // -----------------------------------------------------------
+
+            logger.info("Message envoyé → SID: {}, statut final: {}", fetchedMsg.getSid(), finalStatus);
 
             return new SendMessageDBResponseDTO(
                     errorCode == null ? "success" : "failed",
@@ -126,6 +147,19 @@ public class MessagingService {
 
         } catch (Exception e) {
             logger.error("Échec envoi message → destinataire={}", sms.getDestinataire(), e);
+
+            // Enregistrement en base même en cas d'erreur
+            MessageEnvoye message = new MessageEnvoye();
+            message.setIdNumero(idNumero);
+            message.setDestinataire(sms.getDestinataire());
+            //message.setTypeMessage(isWhatsapp ? "whatsapp" : "sms");
+            message.setContenu(sms.getMessageTexte() != null ? sms.getMessageTexte().getContenu() : null);
+            message.setStatut("failed");
+            message.setErrorCode(400);
+            message.setErrorMessage(e.getMessage());
+            message.setTwilioSid(null);
+            message.setDateCreated(new Date());
+            messageEnvoyeRepository.save(message);
 
             return new SendMessageDBResponseDTO(
                     "failed",

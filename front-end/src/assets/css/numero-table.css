@@ -1,0 +1,23 @@
+.card {
+  border: 1px solid #dee2e6;
+  box-shadow: none;
+}
+
+.card-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.table th {
+  background: #f8f9fa;
+}
+
+.tiny-btn {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+}

@@ -7,68 +7,76 @@
       <p class="mt-2 text-muted">Chargement de vos numéros...</p>
     </div>
 
-    <div v-else class="card shadow-sm">
-      <div class="card-header bg-light">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="card-title mb-0 fw-bold text-dark">Mes Numéros</h5>
+    <div v-else class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-title mb-0">Mes Numéros</div>
+        <button 
+          class="btn btn-primary btn-sm"
+          style="width: 100px"
+          @click="showAddModal = true"
+        >
+          Ajouter
+        </button>
+      </div>
+      
+      <div class="card-body">
+        <!-- Aucun numéro -->
+        <div v-if="tableData.length === 0" class="text-center py-4">
+          <div class="text-muted mb-3">📱</div>
+          <p class="text-muted mb-2">Aucun numéro n'est associé à votre compte</p>
+
           <button 
-            class="btn btn-primary btn-sm"
-            @click="ajouterNumero"
+            class="btn btn-primary btn-sm tiny-btn"
+            @click="showAddModal = true"
           >
             Ajouter
           </button>
         </div>
-      </div>
-      <div class="card-body">
-        <div v-if="tableData.length === 0" class="text-center py-5">
-          <div class="text-muted mb-3">📱</div>
-          <p class="text-muted mb-2">Aucun numéro n'est associé à votre compte</p>
-          <button 
-            class="btn btn-primary btn-sm tiny-btn"
-            @click="ajouterNumero"
-            >
-            Ajouter
-          </button>
 
-        </div>
-
-        <div v-else class="table-responsive">
+        <!-- TABLEAU -->
+        <div v-else>
           <table class="table table-hover">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Numéro</th>
-                <th>Propriétaire</th>
-                <th>Plateformes disponibles</th>
+                <th scope="col">#</th>
+                <th scope="col">Numéro</th>
+                <th scope="col">Propriétaire</th>
+                <th scope="col">Plateformes</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(row, index) in tableData" :key="row.id">
-                <td class="fw-bold text-muted">{{ index + 1 }}</td>
-                <td>
-                  <code class="fs-6">{{ row.valeurNumero }}</code>
-                </td>
+                <td>{{ index + 1 }}</td>
+                <td>{{ row.valeurNumero }}</td>
                 <td>{{ row.proprietaire }}</td>
-                <td>
-                  {{ row.plateformes }}
-                </td>
+                <td>{{ row.plateformes.join(', ') }}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-      <div v-if="tableData.length > 0" class="card-footer bg-light">
-        <small class="text-muted">
-          Total : {{ tableData.length }} numéro(s)
-        </small>
+
+      <!-- FOOTER -->
+      <div v-if="tableData.length > 0" class="card-footer">
+        <small class="text-muted">Total : {{ tableData.length }} numéro(s)</small>
       </div>
     </div>
+
+    <!-- MODAL D'AJOUT -->
+    <AddNumeroModal
+      :show="showAddModal"
+      @update:show="showAddModal = $event"
+      @numero-added="handleNumeroAdded"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import numeroOverviewService from '../services/listNumeroService'
+import AddNumeroModal from '../components/Numero.vue' // Chemin à ajuster
+import '../assets/css/numero-table.css'
+
 
 interface Numero {
   id: number
@@ -79,6 +87,7 @@ interface Numero {
 
 const loading = ref(true)
 const tableData = ref<Numero[]>([])
+const showAddModal = ref(false)
 
 const fetchData = async () => {
   try {
@@ -90,28 +99,12 @@ const fetchData = async () => {
   }
 }
 
-const ajouterNumero = () => {
-  console.log('Ajouter un nouveau numéro')
-  alert('Fonctionnalité d\'ajout à implémenter')
+const handleNumeroAdded = () => {
+  // Rafraîchir la liste après l'ajout
+  fetchData()
 }
 
 onMounted(() => {
   fetchData()
 })
 </script>
-
-<style scoped>
-.card {
-  border: 1px solid #e3f2fd;
-}
-
-.table th {
-  background-color: #f8f9fa;
-  border-bottom: 2px solid #dee2e6;
-}
-.tiny-btn {
-  font-size: 0.7rem;   /* taille du texte plus petite */
-  padding: 0.25rem 0.5rem; /* réduit le padding du bouton */
-}
-
-</style>
